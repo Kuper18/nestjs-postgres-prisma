@@ -9,6 +9,8 @@ import { UserModule } from './user/user.module';
 import configuration from './config/configuration';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { MailModule } from './mail/mail.module';
+import { VerifiedGuard } from './common/guards/verified.guard';
 
 @Module({
   imports: [
@@ -20,8 +22,13 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     PrismaModule,
     AuthModule,
     UserModule,
+    MailModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: VerifiedGuard },
+  ],
 })
 export class AppModule {}

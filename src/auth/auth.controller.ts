@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   Res,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import type { Request, Response } from 'express';
 import { LoginDto } from './dto/login.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { Authorized } from 'src/common/decorators/authorized.decorator';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -22,14 +24,14 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.CREATED)
   @Post('signup')
-  signup(@Res({ passthrough: true }) res: Response, @Body() dto: SignupDto) {
-    return this.authService.signup(res, dto);
+  signup(@Body() dto: SignupDto) {
+    return this.authService.signup(dto);
   }
 
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  logion(@Res({ passthrough: true }) res: Response, @Body() dto: LoginDto) {
+  login(@Res({ passthrough: true }) res: Response, @Body() dto: LoginDto) {
     return this.authService.login(res, dto);
   }
 
@@ -55,5 +57,17 @@ export class AuthController {
   @Get('me')
   getMe(@Authorized('id') userId: string) {
     this.getMe(userId);
+  }
+
+  @Public()
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Public()
+  @Post('resend-email-verification')
+  resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerificationEmail(dto.email);
   }
 }

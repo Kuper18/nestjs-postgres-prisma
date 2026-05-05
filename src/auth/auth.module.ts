@@ -10,6 +10,8 @@ import { BcryptService } from './providers/bcrypt.service';
 import { TokenService } from './providers/token.service';
 import { CookieService } from './providers/cookie.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailModule } from 'src/mail/mail.module';
+import { VerificationTokenService } from './providers/verification-token.service';
 
 @Module({
   imports: [
@@ -20,6 +22,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
     PassportModule,
     UserModule,
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -28,6 +31,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     TokenService,
     CookieService,
     JwtStrategy,
+    VerificationTokenService,
   ],
 })
 export class AuthModule {}

@@ -15,4 +15,13 @@ export default () => ({
   // App
   NODE_ENV: process.env.NODE_ENV || 'development',
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
+
+  // Mail
+  MAIL_HOST: process.env.MAIL_HOST,
+  MAIL_PORT: process.env.MAIL_PORT,
+  MAIL_PASSWORD: process.env.MAIL_PASSWORD,
+  MAIL_FROM: process.env.MAIL_FROM,
+
+  // Client
+  CLIENT_URL: process.env.CLIENT_URL,
 });

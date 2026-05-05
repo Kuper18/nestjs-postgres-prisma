@@ -41,4 +41,11 @@ export class UserService {
   async findByEmail(email: string): Promise<User | null> {
     return await this.prismaService.user.findUnique({ where: { email } });
   }
+
+  async markAsVerified(id: string): Promise<User> {
+    return await this.prismaService.user.update({
+      where: { id },
+      data: { isVerified: true },
+    });
+  }
 }

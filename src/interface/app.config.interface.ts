@@ -12,4 +12,11 @@ export interface AppConfigInterface {
   JWT_SECRET: string;
   JWT_ACCESS_TOKEN_TTL: string;
   JWT_REFRESH_TOKEN_TTL: string;
+
+  MAIL_HOST: string;
+  MAIL_PORT: number;
+  MAIL_PASSWORD: string;
+  MAIL_FROM: string;
+
+  CLIENT_URL: string;
 }

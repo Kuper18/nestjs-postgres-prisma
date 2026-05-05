@@ -17,4 +17,13 @@ export const envValidationSchema = z.object({
   JWT_SECRET: z.string(),
   JWT_ACCESS_TOKEN_TTL: z.string(),
   JWT_REFRESH_TOKEN_TTL: z.string(),
+
+  // mail
+  MAIL_HOST: z.string(),
+  MAIL_PORT: z.coerce.number(),
+  MAIL_PASSWORD: z.string(),
+  MAIL_FROM: z.string(),
+
+  // client
+  CLIENT_URL: z.url(),
 });
