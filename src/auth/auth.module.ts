@@ -7,11 +7,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getJwtConfig } from 'src/config/jwt.config';
 import { UserModule } from 'src/user/user.module';
 import { BcryptService } from './providers/bcrypt.service';
-import { TokenService } from './providers/token.service';
+import { JwtTokenService } from './providers/jwt-token.service';
 import { CookieService } from './providers/cookie.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { MailModule } from 'src/mail/mail.module';
 import { VerificationTokenService } from './providers/verification-token.service';
+import { RegistrationService } from './providers/registration.service';
+import { PasswordService } from './providers/password.service';
 
 @Module({
   imports: [
@@ -28,9 +30,11 @@ import { VerificationTokenService } from './providers/verification-token.service
   providers: [
     AuthService,
     BcryptService,
-    TokenService,
+    JwtTokenService,
     CookieService,
     JwtStrategy,
+    RegistrationService,
+    PasswordService,
     VerificationTokenService,
   ],
 })

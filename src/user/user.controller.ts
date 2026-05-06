@@ -1,10 +1,25 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
+import { Authorized } from 'src/common/decorators/authorized.decorator';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @HttpCode(HttpStatus.OK)
+  @Get('me')
+  getMe(@Authorized('id') userId: string) {
+    return this.userService.findById(userId);
+  }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {

@@ -1,54 +1,23 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { SignupDto } from '../dto/signup.dto';
-import { UserService } from 'src/user/user.service';
-import { BcryptService } from './bcrypt.service';
-import { TokenService } from './token.service';
-import { CookieService } from './cookie.service';
 import { Request, Response } from 'express';
+import { UserService } from 'src/user/user.service';
 import { LoginDto } from '../dto/login.dto';
-import { VerificationTokenService } from './verification-token.service';
-import { TokenType } from 'generated/prisma/enums';
-import { User } from 'generated/prisma/client';
-import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { BcryptService } from './bcrypt.service';
+import { CookieService } from './cookie.service';
+import { JwtTokenService } from './jwt-token.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly bcryptService: BcryptService,
-    private readonly tokenService: TokenService,
+    private readonly jwtTokenService: JwtTokenService,
     private readonly cookieService: CookieService,
-    private readonly verificationTokenService: VerificationTokenService,
   ) {}
-  async signup(dto: SignupDto) {
-    const existingUser = await this.userService.findByEmail(dto.email);
-
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists.');
-    }
-
-    const hashedPassword = await this.bcryptService.hash(dto.password);
-    const newUser = await this.userService.create({
-      ...dto,
-      password: hashedPassword,
-    });
-
-    await this.verificationTokenService.sendVerificationToken(
-      newUser.id,
-      newUser.email,
-      TokenType.EMAIL_VERIFICATION,
-    );
-
-    return {
-      message:
-        'Signup successful. Please check your email to verify your account.',
-    };
-  }
 
   async login(res: Response, dto: LoginDto) {
     const user = await this.userService.findByEmail(dto.email);
@@ -92,7 +61,7 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token is not valid.');
     }
 
-    const payload = await this.tokenService.verifyToken(refreshToken);
+    const payload = await this.jwtTokenService.verifyToken(refreshToken);
     const user = await this.userService.findById(payload.id);
 
     if (!user || !payload) {
@@ -111,89 +80,9 @@ export class AuthService {
     return this.auth(res, user.id);
   }
 
-  async forgotPassword(email: string) {
-    const user = await this.userService.findByEmail(email);
-
-    if (user && user.isVerified) {
-      await this.guardResendToken(user.id, TokenType.PASSWORD_RESET);
-      await this.verificationTokenService.sendVerificationToken(
-        user.id,
-        user.email,
-        TokenType.PASSWORD_RESET,
-      );
-    }
-
-    return { message: 'If the email exists, you will receive a reset link.' };
-  }
-
-  async resetPassword(dto: ResetPasswordDto) {
-    const user = await this.verificationTokenService.consumeToken(
-      dto.token,
-      TokenType.PASSWORD_RESET,
-    );
-
-    if (!user) {
-      throw new BadRequestException('Reset link is invalid or has expired.');
-    }
-
-    const hashedPassword = await this.bcryptService.hash(dto.password);
-    await this.userService.updatePassword({
-      id: user.id,
-      password: hashedPassword,
-    });
-
-    return { message: 'Password reset successfully.' };
-  }
-
-  async getMe(id: string): Promise<User> {
-    return await this.userService.findById(id);
-  }
-
-  async verifyEmail(token: string) {
-    const user = await this.verificationTokenService.consumeToken(
-      token,
-      TokenType.EMAIL_VERIFICATION,
-    );
-
-    if (!user) {
-      throw new BadRequestException(
-        'Verification link is invalid or has expired.',
-      );
-    }
-
-    if (user.isVerified) {
-      return { message: 'Email is already verified.' };
-    }
-
-    await this.userService.markAsVerified(user.id);
-
-    return { message: 'Email verified successfully.' };
-  }
-
-  async resendVerificationEmail(email: string) {
-    const user = await this.userService.findByEmail(email);
-
-    if (!user) {
-      throw new BadRequestException('Invalid email address.');
-    }
-
-    if (user.isVerified) {
-      throw new BadRequestException('Your email is already verified.');
-    }
-
-    await this.guardResendToken(user.id, TokenType.EMAIL_VERIFICATION);
-    await this.verificationTokenService.sendVerificationToken(
-      user.id,
-      user.email,
-      TokenType.EMAIL_VERIFICATION,
-    );
-
-    return { message: 'Verification email sent.' };
-  }
-
   private async auth(res: Response, userId: string) {
     const { accessToken, refreshToken } =
-      this.tokenService.generateTokens(userId);
+      this.jwtTokenService.generateTokens(userId);
     const hashedToken = await this.bcryptService.hash(refreshToken);
 
     await this.userService.updateRefreshToken({
@@ -203,21 +92,5 @@ export class AuthService {
     this.cookieService.setCookie(res, refreshToken);
 
     return { accessToken };
-  }
-
-  private async guardResendToken(
-    userId: string,
-    tokenType: TokenType,
-  ): Promise<void> {
-    const canResend = await this.verificationTokenService.canResendToken(
-      userId,
-      tokenType,
-    );
-
-    if (!canResend) {
-      throw new BadRequestException(
-        'Please wait 1 minute before requesting another email.',
-      );
-    }
   }
 }

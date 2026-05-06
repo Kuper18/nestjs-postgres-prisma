@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { randomBytes } from 'crypto';
 import { TokenType } from 'generated/prisma/enums';
@@ -53,7 +53,20 @@ export class VerificationTokenService {
     }
   }
 
-  async canResendToken(userId: string, type: TokenType): Promise<boolean> {
+  async guardResendToken(userId: string, tokenType: TokenType): Promise<void> {
+    const canResend = await this.canResendToken(userId, tokenType);
+
+    if (!canResend) {
+      throw new BadRequestException(
+        'Please wait 1 minute before requesting another email.',
+      );
+    }
+  }
+
+  private async canResendToken(
+    userId: string,
+    type: TokenType,
+  ): Promise<boolean> {
     const existing = await this.prisma.verificationToken.findFirst({
       where: { userId, type },
     });

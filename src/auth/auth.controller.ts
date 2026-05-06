@@ -18,16 +18,22 @@ import { Authorized } from 'src/common/decorators/authorized.decorator';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RegistrationService } from './providers/registration.service';
+import { PasswordService } from './providers/password.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly registrationService: RegistrationService,
+    private readonly passwordService: PasswordService,
+  ) {}
 
   @Public()
   @HttpCode(HttpStatus.CREATED)
   @Post('signup')
   signup(@Body() dto: SignupDto) {
-    return this.authService.signup(dto);
+    return this.registrationService.signup(dto);
   }
 
   @Public()
@@ -56,32 +62,30 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Get('me')
-  getMe(@Authorized('id') userId: string) {
-    this.getMe(userId);
-  }
-
   @Public()
   @Get('verify-email')
   async verifyEmail(@Query('token') token: string) {
-    return this.authService.verifyEmail(token);
+    return this.registrationService.verifyEmail(token);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Public()
   @Post('resend-email-verification')
   resendVerification(@Body() dto: ResendVerificationDto) {
-    return this.authService.resendVerificationEmail(dto.email);
+    return this.registrationService.resendVerificationEmail(dto.email);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Public()
   @Post('forgot-password')
   forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(dto.email);
+    return this.passwordService.forgotPassword(dto.email);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Public()
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
+    return this.passwordService.resetPassword(dto);
   }
 }

@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AppConfigInterface } from 'src/interface/app.config.interface';
 
 @Injectable()
-export class TokenService {
+export class JwtTokenService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly config: ConfigService<AppConfigInterface>,
