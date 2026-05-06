@@ -21,6 +21,7 @@ export default () => ({
   MAIL_PORT: process.env.MAIL_PORT,
   MAIL_PASSWORD: process.env.MAIL_PASSWORD,
   MAIL_FROM: process.env.MAIL_FROM,
+  MAIL_USER: process.env.MAIL_USER,
 
   // Client
   CLIENT_URL: process.env.CLIENT_URL,

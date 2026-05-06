@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from 'generated/prisma/client';
+import { UpdatePasswordInterface } from './interface/update-password.interface';
+import { UpdateRefreshTokenInterface } from './interface/update-refresh-token.interface';
 
 @Injectable()
 export class UserService {
@@ -11,16 +13,10 @@ export class UserService {
     return await this.prismaService.user.create({ data: dto });
   }
 
-  async updateRefreshToken({
-    id,
-    refreshToken,
-  }: {
-    id: string;
-    refreshToken: string | null;
-  }) {
+  async updateRefreshToken(data: UpdateRefreshTokenInterface): Promise<User> {
     return await this.prismaService.user.update({
-      where: { id },
-      data: { refreshToken },
+      where: { id: data.id },
+      data: { refreshToken: data.refreshToken },
     });
   }
 
@@ -46,6 +42,13 @@ export class UserService {
     return await this.prismaService.user.update({
       where: { id },
       data: { isVerified: true },
+    });
+  }
+
+  async updatePassword(data: UpdatePasswordInterface): Promise<User> {
+    return await this.prismaService.user.update({
+      where: { id: data.id },
+      data: { password: data.password },
     });
   }
 }

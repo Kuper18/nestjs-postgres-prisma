@@ -3,18 +3,22 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { randomBytes } from 'crypto';
 import { TokenType } from 'generated/prisma/enums';
 import { MailService } from 'src/mail/mail.service';
+import { User } from 'generated/prisma/client';
 
 @Injectable()
 export class VerificationTokenService {
-  TOKEN_TTL = 15 * 60 * 1000;
-  RESEND_COOLDOWN_MS = 60 * 1000;
+  TOKEN_TTL = 15 * 60 * 1000; // 15 minutes
+  RESEND_COOLDOWN_MS = 60 * 1000; // 1 minute
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
   ) {}
 
-  async consumeToken(token: string, expectedType: TokenType) {
+  async consumeToken(
+    token: string,
+    expectedType: TokenType,
+  ): Promise<User | null> {
     const record = await this.prisma.verificationToken.findUnique({
       where: { token },
       include: { user: true },

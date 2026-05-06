@@ -13,6 +13,8 @@ import { Request, Response } from 'express';
 import { LoginDto } from '../dto/login.dto';
 import { VerificationTokenService } from './verification-token.service';
 import { TokenType } from 'generated/prisma/enums';
+import { User } from 'generated/prisma/client';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -109,7 +111,41 @@ export class AuthService {
     return this.auth(res, user.id);
   }
 
-  async getMe(id: string) {
+  async forgotPassword(email: string) {
+    const user = await this.userService.findByEmail(email);
+
+    if (user && user.isVerified) {
+      await this.guardResendToken(user.id, TokenType.PASSWORD_RESET);
+      await this.verificationTokenService.sendVerificationToken(
+        user.id,
+        user.email,
+        TokenType.PASSWORD_RESET,
+      );
+    }
+
+    return { message: 'If the email exists, you will receive a reset link.' };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.verificationTokenService.consumeToken(
+      dto.token,
+      TokenType.PASSWORD_RESET,
+    );
+
+    if (!user) {
+      throw new BadRequestException('Reset link is invalid or has expired.');
+    }
+
+    const hashedPassword = await this.bcryptService.hash(dto.password);
+    await this.userService.updatePassword({
+      id: user.id,
+      password: hashedPassword,
+    });
+
+    return { message: 'Password reset successfully.' };
+  }
+
+  async getMe(id: string): Promise<User> {
     return await this.userService.findById(id);
   }
 
@@ -145,7 +181,7 @@ export class AuthService {
       throw new BadRequestException('Your email is already verified.');
     }
 
-    await this.guardResendEmailVerification(user.id);
+    await this.guardResendToken(user.id, TokenType.EMAIL_VERIFICATION);
     await this.verificationTokenService.sendVerificationToken(
       user.id,
       user.email,
@@ -169,10 +205,13 @@ export class AuthService {
     return { accessToken };
   }
 
-  private async guardResendEmailVerification(userId: string): Promise<void> {
+  private async guardResendToken(
+    userId: string,
+    tokenType: TokenType,
+  ): Promise<void> {
     const canResend = await this.verificationTokenService.canResendToken(
       userId,
-      TokenType.EMAIL_VERIFICATION,
+      tokenType,
     );
 
     if (!canResend) {

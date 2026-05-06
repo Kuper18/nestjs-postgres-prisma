@@ -1,4 +1,3 @@
-// src/mail/mail.service.ts
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import nodemailer, { Transporter, SentMessageInfo } from 'nodemailer';
@@ -16,7 +15,7 @@ export class MailService {
       host: this.configService.getOrThrow('MAIL_HOST'),
       port: this.configService.getOrThrow('MAIL_PORT'),
       auth: {
-        user: 'api',
+        user: this.configService.getOrThrow('MAIL_USER'),
         pass: this.configService.getOrThrow('MAIL_PASSWORD'),
       },
     });

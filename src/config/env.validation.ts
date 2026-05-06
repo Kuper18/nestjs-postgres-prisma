@@ -23,6 +23,7 @@ export const envValidationSchema = z.object({
   MAIL_PORT: z.coerce.number(),
   MAIL_PASSWORD: z.string(),
   MAIL_FROM: z.string(),
+  MAIL_USER: z.string(),
 
   // client
   CLIENT_URL: z.url(),

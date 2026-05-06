@@ -17,6 +17,7 @@ export interface AppConfigInterface {
   MAIL_PORT: number;
   MAIL_PASSWORD: string;
   MAIL_FROM: string;
+  MAIL_USER: string;
 
   CLIENT_URL: string;
 }
