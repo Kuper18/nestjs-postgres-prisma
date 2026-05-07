@@ -8,18 +8,22 @@ import {
   Query,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { Authorized } from 'src/common/decorators/authorized.decorator';
+import { Public } from 'src/common/decorators/public.decorator';
+import { GoogleOauthGuard } from 'src/common/guards/google-oauth.guard';
+import type { RequestWithUser } from 'src/interface/request-with-user.interface';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { LoginDto } from './dto/login.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignupDto } from './dto/signup.dto';
 import { AuthService } from './providers/auth.service';
-import type { Request, Response } from 'express';
-import { LoginDto } from './dto/login.dto';
-import { Public } from 'src/common/decorators/public.decorator';
-import { Authorized } from 'src/common/decorators/authorized.decorator';
-import { ResendVerificationDto } from './dto/resend-verification.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { RegistrationService } from './providers/registration.service';
+import { OauthService } from './providers/oauth.service';
 import { PasswordService } from './providers/password.service';
+import { RegistrationService } from './providers/registration.service';
 
 @Controller('auth')
 export class AuthController {
@@ -27,6 +31,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly registrationService: RegistrationService,
     private readonly passwordService: PasswordService,
+    private readonly oauthService: OauthService,
   ) {}
 
   @Public()
@@ -87,5 +92,22 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.passwordService.resetPassword(dto);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @UseGuards(GoogleOauthGuard)
+  @Get('google')
+  googleLogin() {}
+
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @UseGuards(GoogleOauthGuard)
+  @Get('google/callback')
+  googleCallback(
+    @Req() req: RequestWithUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.oauthService.googleCallback(res, req.user);
   }
 }

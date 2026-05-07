@@ -7,8 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { Request } from 'express';
-import { User } from 'generated/prisma/client';
+import { RequestWithUser } from 'src/interface/request-with-user.interface';
 
 @Injectable()
 export class VerifiedGuard implements CanActivate {
@@ -22,8 +21,8 @@ export class VerifiedGuard implements CanActivate {
 
     if (isPublic) return true;
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const user = request.user as User;
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const user = request.user;
 
     if (!user) return true;
 

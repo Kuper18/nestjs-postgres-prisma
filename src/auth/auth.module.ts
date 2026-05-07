@@ -14,6 +14,8 @@ import { MailModule } from 'src/mail/mail.module';
 import { VerificationTokenService } from './providers/verification-token.service';
 import { RegistrationService } from './providers/registration.service';
 import { PasswordService } from './providers/password.service';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { OauthService } from './providers/oauth.service';
 
 @Module({
   imports: [
@@ -32,10 +34,12 @@ import { PasswordService } from './providers/password.service';
     BcryptService,
     JwtTokenService,
     CookieService,
-    JwtStrategy,
+    OauthService,
     RegistrationService,
     PasswordService,
     VerificationTokenService,
+    JwtStrategy,
+    GoogleStrategy,
   ],
 })
 export class AuthModule {}

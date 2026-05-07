@@ -80,7 +80,7 @@ export class AuthService {
     return this.auth(res, user.id);
   }
 
-  private async auth(res: Response, userId: string) {
+  async auth(res: Response, userId: string) {
     const { accessToken, refreshToken } =
       this.jwtTokenService.generateTokens(userId);
     const hashedToken = await this.bcryptService.hash(refreshToken);

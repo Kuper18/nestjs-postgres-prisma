@@ -15,6 +15,7 @@ export default () => ({
   // App
   NODE_ENV: process.env.NODE_ENV || 'development',
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
+  CLIENT_URL: process.env.CLIENT_URL,
 
   // Mail
   MAIL_HOST: process.env.MAIL_HOST,
@@ -23,6 +24,8 @@ export default () => ({
   MAIL_FROM: process.env.MAIL_FROM,
   MAIL_USER: process.env.MAIL_USER,
 
-  // Client
-  CLIENT_URL: process.env.CLIENT_URL,
+  // OAuth
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
 });

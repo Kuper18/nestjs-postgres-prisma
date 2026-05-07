@@ -9,7 +9,7 @@ import { UpdateRefreshTokenInterface } from './interface/update-refresh-token.in
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(dto: CreateUserDto) {
+  async create(dto: CreateUserDto & { isVerified?: boolean }): Promise<User> {
     return await this.prismaService.user.create({ data: dto });
   }
 
