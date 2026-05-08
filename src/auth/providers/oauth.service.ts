@@ -45,10 +45,8 @@ export class OauthService {
   }
 
   async googleCallback(res: Response, user: User) {
-    const { accessToken } = await this.authService.auth(res, user.id);
+    await this.authService.auth(res, user.id);
 
-    return res.redirect(
-      `${this.configService.getOrThrow('CLIENT_URL')}?token=${accessToken}`,
-    );
+    return res.redirect(`${this.configService.getOrThrow('CLIENT_URL')}`);
   }
 }

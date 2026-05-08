@@ -81,16 +81,15 @@ export class AuthService {
   }
 
   async auth(res: Response, userId: string) {
-    const { accessToken, refreshToken } =
-      this.jwtTokenService.generateTokens(userId);
-    const hashedToken = await this.bcryptService.hash(refreshToken);
+    const tokens = this.jwtTokenService.generateTokens(userId);
+    const hashedToken = await this.bcryptService.hash(tokens.refreshToken);
 
     await this.userService.updateRefreshToken({
       id: userId,
       refreshToken: hashedToken,
     });
-    this.cookieService.setCookie(res, refreshToken);
+    this.cookieService.setCookie(res, tokens);
 
-    return { accessToken };
+    return { messaage: 'Login is successful' };
   }
 }

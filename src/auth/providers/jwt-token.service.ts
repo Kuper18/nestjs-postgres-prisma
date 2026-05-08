@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AppConfigInterface } from 'src/interface/app.config.interface';
+import { TokenResponseType } from '../types/token-response.type';
 
 @Injectable()
 export class JwtTokenService {
@@ -10,7 +11,7 @@ export class JwtTokenService {
     private readonly config: ConfigService<AppConfigInterface>,
   ) {}
 
-  generateTokens(id: string) {
+  generateTokens(id: string): TokenResponseType {
     const payload = { id };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.config.getOrThrow('JWT_ACCESS_TOKEN_TTL'),
