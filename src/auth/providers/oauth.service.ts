@@ -3,7 +3,7 @@ import { Profile } from 'passport-google-oauth20';
 import { UserService } from 'src/user/user.service';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
-import { User } from 'generated/prisma/client';
+import { User } from 'src/generated/prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { AppConfigInterface } from 'src/interface/app.config.interface';
 

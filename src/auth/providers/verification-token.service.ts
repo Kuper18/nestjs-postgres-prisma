@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { randomBytes } from 'crypto';
-import { TokenType } from 'generated/prisma/enums';
+import { TokenType } from 'src/generated/prisma/enums';
 import { MailService } from 'src/mail/mail.service';
-import { User } from 'generated/prisma/client';
+import { User } from 'src/generated/prisma/client';
 
 @Injectable()
 export class VerificationTokenService {

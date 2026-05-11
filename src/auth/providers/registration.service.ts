@@ -7,7 +7,7 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { TokenType } from 'generated/prisma/enums';
+import { TokenType } from 'src/generated/prisma/enums';
 
 @Injectable()
 export class RegistrationService {

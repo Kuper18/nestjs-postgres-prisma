@@ -1,7 +1,7 @@
 import { UserService } from 'src/user/user.service';
 import { BcryptService } from './bcrypt.service';
 import { VerificationTokenService } from './verification-token.service';
-import { TokenType } from 'generated/prisma/enums';
+import { TokenType } from 'src/generated/prisma/enums';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 
