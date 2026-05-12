@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { MailModule } from './mail/mail.module';
 import { VerifiedGuard } from './common/guards/verified.guard';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { VerifiedGuard } from './common/guards/verified.guard';
     AuthModule,
     UserModule,
     MailModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [

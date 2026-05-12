@@ -41,5 +41,6 @@ import { OauthService } from './providers/oauth.service';
     JwtStrategy,
     GoogleStrategy,
   ],
+  exports: [JwtTokenService],
 })
 export class AuthModule {}

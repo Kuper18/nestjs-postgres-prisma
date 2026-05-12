@@ -63,5 +63,4 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 .agents
 .claude
-CLAUDE.md
 skills-lock.json
