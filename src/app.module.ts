@@ -8,9 +8,11 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import configuration from './config/configuration';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { MailModule } from './mail/mail.module';
 import { VerifiedGuard } from './common/guards/verified.guard';
+import { RestThrottlerGuard } from './common/guards/rest-throttler.guard';
 import { ChatModule } from './chat/chat.module';
 
 @Module({
@@ -20,6 +22,7 @@ import { ChatModule } from './chat/chat.module';
       validate: (env) => envValidationSchema.parse(env),
       load: [configuration],
     }),
+    ThrottlerModule.forRoot([{ name: 'default', ttl: minutes(1), limit: 100 }]),
     PrismaModule,
     AuthModule,
     UserModule,
@@ -29,6 +32,7 @@ import { ChatModule } from './chat/chat.module';
   controllers: [AppController],
   providers: [
     AppService,
+    { provide: APP_GUARD, useClass: RestThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: VerifiedGuard },
   ],

@@ -1,98 +1,102 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Chat App API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Real-time chat backend: **NestJS + PostgreSQL (Prisma) + Socket.IO**, with JWT auth (httpOnly cookies), email verification, and rate limiting.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- REST + WebSocket (`/chat` namespace) API
+- Swagger docs at **`/docs`**
+- 1:1 (direct) chats now; data model is forward-compatible with group chats
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Local setup
 
 ```bash
-$ yarn install
+yarn install                       # install deps
+cp .env.example .env               # then fill in real values
+yarn prisma migrate dev            # create/apply DB schema locally
+yarn prisma generate               # regenerate Prisma client (after schema changes)
+yarn run start:dev                 # run with hot reload
 ```
 
-## Compile and run the project
+API: `http://localhost:3000` · Swagger: `http://localhost:3000/docs`
+
+### Environment variables
+
+All vars are validated with Zod at startup (`src/config/env.validation.ts`) — the app **won't boot** if any are missing/invalid. See `.env.example` for the full list. Key groups:
+
+| Group | Vars |
+|-------|------|
+| Database | `DATABASE_URL`, `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` |
+| Auth | `JWT_SECRET`, `JWT_ACCESS_TOKEN_TTL`, `JWT_REFRESH_TOKEN_TTL`, `COOKIE_DOMAIN` |
+| Mail | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASSWORD`, `MAIL_FROM` |
+| OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` |
+| App | `NODE_ENV` (`development` \| `production` \| `staging`), `CLIENT_URL`, `PORT` (optional, default `3000`) |
+
+---
+
+## ✅ Production deployment checklist
+
+Do these every time you deploy to prod:
+
+1. **Set `NODE_ENV=production`.** This is what enables `trust proxy` in `src/main.ts` (see below). Also set every other env var from the table above (`CLIENT_URL` must be the real frontend origin — it drives both CORS and email links).
+
+2. **Run migrations with `deploy`, not `dev`:**
+   ```bash
+   yarn prisma migrate deploy
+   ```
+   `migrate dev` is for local only (it can reset/prompt). `migrate deploy` just applies pending migrations.
+
+3. **Build and start:**
+   ```bash
+   yarn run build
+   yarn run start:prod
+   ```
+
+4. **Configure the reverse proxy (nginx / load balancer).** The app sits behind a proxy in prod, so the proxy **must** forward the real client IP and support WebSocket upgrades. Without `X-Forwarded-For`, the rate limiter sees the proxy's IP and throttles *all users as one*.
+
+   - **Managed platforms** (AWS ALB, GCP LB, Cloudflare, Render, Railway, Heroku, Fly.io): `X-Forwarded-For` is set automatically — nothing to do.
+   - **Self-managed nginx:** add to your proxy block:
+     ```nginx
+     location / {
+         proxy_pass http://localhost:3000;
+         proxy_set_header Host $host;
+         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+         proxy_set_header X-Forwarded-Proto $scheme;
+
+         # required for Socket.IO (WebSocket upgrade)
+         proxy_http_version 1.1;
+         proxy_set_header Upgrade $http_upgrade;
+         proxy_set_header Connection "upgrade";
+     }
+     ```
+
+   > `trust proxy` is set to `1` (trust one hop). If you have **more than one** proxy in front, bump the number in `src/main.ts`, otherwise clients could spoof their IP via the header.
+
+5. **Verify** after deploy: hit any endpoint and confirm logged `req.ip` is the real client IP (not the proxy's). If it's the proxy IP, step 4 isn't applied.
+
+---
+
+## Rate limiting
+
+Powered by `@nestjs/throttler` (per-IP for REST, per-user for WebSocket).
+
+- Global default: **100 requests / minute** on all REST routes.
+- Tighter limits: message send (`POST /chat/:id/message` & WS `message.send`) 30/10s; auth endpoints 3–10/min.
+- Storage is **in-memory**. This is per-instance — if you run **multiple instances**, limits won't be shared. When you scale horizontally, switch to a shared store (`@nest-lab/throttler-storage-redis`) in `ThrottlerModule` (`src/app.module.ts`).
+
+---
+
+## Useful commands
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+yarn run start:dev        # dev with hot reload
+yarn run build            # compile to dist/
+yarn run start:prod       # run compiled build
+yarn run lint             # ESLint (auto-fix)
+yarn run test             # unit tests
+yarn run test:e2e         # e2e tests
+yarn prisma migrate dev   # create + apply migration (local)
+yarn prisma migrate deploy# apply pending migrations (prod)
+yarn prisma generate      # regenerate Prisma client
+yarn prisma studio        # browse the DB
 ```
-
-## Run tests
-
-```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

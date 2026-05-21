@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle, minutes } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { Authorized } from 'src/common/decorators/authorized.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -65,6 +66,11 @@ export class AuthController {
     status: 400,
     description: 'Validation error — check request body.',
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Rate limit exceeded (max 5 requests per minute).',
+  })
+  @Throttle({ default: { limit: 5, ttl: minutes(1) } })
   @Public()
   @HttpCode(HttpStatus.CREATED)
   @Post('signup')
@@ -80,6 +86,11 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Invalid email or password.' })
   @ApiResponse({ status: 401, description: 'Email is not verified.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Rate limit exceeded (max 10 requests per minute).',
+  })
+  @Throttle({ default: { limit: 10, ttl: minutes(1) } })
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
@@ -155,6 +166,11 @@ export class AuthController {
     status: 400,
     description: 'Email not found or already verified.',
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Rate limit exceeded (max 3 requests per minute).',
+  })
+  @Throttle({ default: { limit: 3, ttl: minutes(1) } })
   @HttpCode(HttpStatus.OK)
   @Public()
   @Post('resend-email-verification')
@@ -168,6 +184,11 @@ export class AuthController {
     description: 'If the email exists, a password reset link has been sent.',
     schema: { example: { message: 'Password reset email sent.' } },
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Rate limit exceeded (max 3 requests per minute).',
+  })
+  @Throttle({ default: { limit: 3, ttl: minutes(1) } })
   @HttpCode(HttpStatus.OK)
   @Public()
   @Post('forgot-password')
@@ -182,6 +203,11 @@ export class AuthController {
     schema: { example: { message: 'Password has been reset successfully.' } },
   })
   @ApiResponse({ status: 400, description: 'Token is invalid or has expired.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Rate limit exceeded (max 5 requests per minute).',
+  })
+  @Throttle({ default: { limit: 5, ttl: minutes(1) } })
   @HttpCode(HttpStatus.OK)
   @Public()
   @Post('reset-password')

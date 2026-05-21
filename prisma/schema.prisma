@@ -48,8 +48,9 @@ enum TokenType {
 }
 
 model Chat {
-  id   String   @id @default(uuid())
-  type ChatType @default(DIRECT)
+  id        String   @id @default(uuid())
+  type      ChatType @default(DIRECT)
+  directKey String?  @unique @map("direct_key")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
